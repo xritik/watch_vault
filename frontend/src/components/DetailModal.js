@@ -1,34 +1,22 @@
-import { useApp } from '../context/AppContext'
-import { STATUS_MAP } from '../utils/helpers'
+import { useApp } from '../context/AppContext';
+import { STATUS_MAP } from '../utils/helpers';
 
 export default function DetailModal() {
   const {
-    showDetailModal, setShowDetailModal,
-    detailItem, setDetailItem,
-    setShowPwdModal, setPwdAction,
-  } = useApp()
+    showDetailModal,
+    detailItem, setDetailItem, setShowDetailModal,
+    requestAction,
+  } = useApp();
 
-  if (!showDetailModal || !detailItem) return null
+  if (!showDetailModal || !detailItem) return null;
 
-  const m = detailItem
-  const status = STATUS_MAP[m.status] || STATUS_MAP.plan
+  const m = detailItem;
+  const status = STATUS_MAP[m.status] || STATUS_MAP.plan;
 
   const close = () => {
-    setShowDetailModal(false)
-    setDetailItem(null)
-  }
-
-  const onDelete = () => {
-    setPwdAction('delete')
-    close()
-    setTimeout(() => setShowPwdModal(true), 200)
-  }
-
-  const onEdit = () => {
-    setPwdAction('edit')
-    close()
-    setTimeout(() => setShowPwdModal(true), 200)
-  }
+    setShowDetailModal(false);
+    setDetailItem(null);
+  };
 
   return (
     <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && close()}>
@@ -39,7 +27,7 @@ export default function DetailModal() {
           <div className="detail-title-wrap">
             <h2>{m.title}</h2>
             <div className="detail-meta-line">
-              {m.year && <span className="card-year">{m.year}</span>}
+              {m.year  && <span className="card-year">{m.year}</span>}
               {m.genre && <span className="card-genre">{m.genre}</span>}
               <span className={`badge ${status.cls}`}>{status.label}</span>
               {m.rating > 0 && (
@@ -55,12 +43,13 @@ export default function DetailModal() {
           <div className="detail-section-label">Your Note</div>
           <div className="detail-note">{m.note || 'No notes added yet.'}</div>
           <div className="detail-actions">
-            <button className="btn btn-delete" onClick={onDelete}>🗑 Delete</button>
-            <button className="btn btn-edit" onClick={onEdit}>✏️ Edit</button>
+            {/* Pass the item directly — no stale state risk */}
+            <button className="btn btn-delete" onClick={() => requestAction('delete', m)}>🗑 Delete</button>
+            <button className="btn btn-edit"   onClick={() => requestAction('edit',   m)}>✏️ Edit</button>
             <button className="btn btn-cancel" onClick={close}>Close</button>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

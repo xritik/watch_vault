@@ -1,15 +1,15 @@
-import { useApp } from '../context/AppContext'
+import { useApp } from '../context/AppContext';
 
 const TYPE_FILTERS = [
   { value: 'all',         label: 'All Types' },
-  { value: 'movie',       label: 'Movies' },
-  { value: 'series',      label: 'Series' },
-  { value: 'anime',       label: 'Anime' },
-  { value: 'documentary', label: 'Docs' },
-]
+  { value: 'movie',       label: 'Movies'    },
+  { value: 'series',      label: 'Series'    },
+  { value: 'anime',       label: 'Anime'     },
+  { value: 'documentary', label: 'Docs'      },
+];
 
 export default function Controls() {
-  const { typeFilter, setTypeFilter, search, setSearch, sort, setSort } = useApp()
+  const { typeFilter, setTypeFilter, search, setSearch, sort, setSort } = useApp();
 
   return (
     <div className="controls">
@@ -17,17 +17,18 @@ export default function Controls() {
         <span className="search-icon">🔍</span>
         <input
           type="text"
+          id="searchInput"
           placeholder="Search titles…"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
       </div>
 
-      <div className="filter-btns">
+      <div className="filter-btns" id="typeFilter">
         {TYPE_FILTERS.map(f => (
           <button
             key={f.value}
-            className={`filter-btn ${typeFilter === f.value ? 'active' : ''}`}
+            className={`filter-btn${typeFilter === f.value ? ' active' : ''}`}
             onClick={() => setTypeFilter(f.value)}
           >
             {f.label}
@@ -37,6 +38,7 @@ export default function Controls() {
 
       <select
         className="sort-select"
+        id="sortSelect"
         value={sort}
         onChange={e => setSort(e.target.value)}
       >
@@ -47,5 +49,5 @@ export default function Controls() {
         <option value="year">By Year</option>
       </select>
     </div>
-  )
+  );
 }
