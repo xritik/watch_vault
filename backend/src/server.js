@@ -13,7 +13,7 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors({ origin: "https://watch-vault-alpha.vercel.app", credentials: true }));
+app.use(cors({ origin: "https://xritik-watch-vault.vercel.app", credentials: true }));
 app.use(express.json());
 app.use(morgan(process.env.NODE_ENV === 'development' ? 'dev' : 'combined'));
 
