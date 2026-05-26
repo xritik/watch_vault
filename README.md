@@ -101,8 +101,3 @@ REACT_APP_API_URL=http://localhost:5000/api
 | POST   | `/api/auth/verify`     | Verify vault password    |
 
 ---
-
-## 🐛 Bugs Fixed
-- **Delete not working** — `detailItem` was cleared before PasswordModal could use it. Fixed with a `pendingItemRef` that persists the target item across modal transitions.
-- **Edit not working** — same root cause. Now resolved via `executePendingAction()` called after successful password verification.
-- **Star rating hover** — properly resets on mouse leave.
