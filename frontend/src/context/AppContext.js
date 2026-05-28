@@ -12,7 +12,7 @@ export function AppProvider({ children }) {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter,   setTypeFilter]   = useState('all');
   const [search,       setSearch]       = useState('');
-  const [sort,         setSort]         = useState('newest');
+  const [sort,         setSort]         = useState('az');
 
   const [showAddModal,    setShowAddModal]    = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);

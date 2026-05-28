@@ -42,16 +42,25 @@ const getAll = async (req, res) => {
       ];
     }
 
-    // Default: favorites first (A→Z), then rest (A→Z)
-    // Other sort options work normally but favorites still bubble up
-    let sortOption = { favorite: -1, title: 1 };
-    if (sort === 'newest')  sortOption = { favorite: -1, added: -1 };
-    else if (sort === 'oldest') sortOption = { favorite: -1, added: 1 };
-    else if (sort === 'rating') sortOption = { favorite: -1, rating: -1 };
-    else if (sort === 'az')     sortOption = { favorite: -1, title: 1 };
-    else if (sort === 'year')   sortOption = { favorite: -1, year: -1 };
+    // Favorites ALWAYS come first (A→Z), then non-favorites sorted by user preference
+    // Within each group, secondary sort applies
+    let favSort   = { favorite: -1, title: 1 }; // default secondary: A→Z
+    if (sort === 'newest')       favSort = { favorite: -1, added: -1  };
+    else if (sort === 'oldest')  favSort = { favorite: -1, added:  1  };
+    else if (sort === 'rating')  favSort = { favorite: -1, rating: -1 };
+    else if (sort === 'az')      favSort = { favorite: -1, title:   1 };
+    else if (sort === 'year')    favSort = { favorite: -1, year:   -1 };
 
-    const items = await Watchlist.find(query).sort(sortOption);
+    // Always enforce A→Z within the favorite group itself
+    // MongoDB multi-key sort: favorite desc, then title asc (for fav group), then secondary
+    // Trick: fetch all, then JS-sort so favorites are always A→Z among themselves
+    const rawItems = await Watchlist.find(query).sort(favSort);
+
+    // Re-sort: favorites A→Z on top, non-favorites using chosen sort (already done by DB)
+    // but force favorites themselves to always be A→Z regardless of outer sort
+    const favorites    = rawItems.filter(i => i.favorite).sort((a,b) => a.title.localeCompare(b.title));
+    const nonFavorites = rawItems.filter(i => !i.favorite);
+    const items = [...favorites, ...nonFavorites];
 
     if (items.length === 0 && !status && !type && !search) {
       const seeded = await Watchlist.insertMany(DEFAULT_DATA);

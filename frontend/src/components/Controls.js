@@ -42,10 +42,10 @@ export default function Controls() {
         value={sort}
         onChange={e => setSort(e.target.value)}
       >
+        <option value="az">A → Z</option>
         <option value="newest">Newest Added</option>
         <option value="oldest">Oldest Added</option>
         <option value="rating">Highest Rated</option>
-        <option value="az">A → Z</option>
         <option value="year">By Year</option>
       </select>
     </div>
