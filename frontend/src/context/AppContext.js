@@ -9,24 +9,20 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [theme, setTheme]   = useState('dark');
 
-  // Filters
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter,   setTypeFilter]   = useState('all');
   const [search,       setSearch]       = useState('');
   const [sort,         setSort]         = useState('newest');
 
-  // Modals
   const [showAddModal,    setShowAddModal]    = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showPwdModal,    setShowPwdModal]    = useState(false);
   const [detailItem,      setDetailItem]      = useState(null);
   const [editItem,        setEditItem]        = useState(null);
-  const [pwdAction,       setPwdAction]       = useState(null); // 'delete' | 'edit'
+  const [pwdAction,       setPwdAction]       = useState(null);
 
-  // *** FIX: keep the item we're acting on in a ref so it survives modal transitions ***
   const pendingItemRef = useRef(null);
 
-  // Toast
   const [toast, setToast] = useState({ show: false, msg: '' });
   const toastTimer = useRef(null);
 
@@ -36,14 +32,12 @@ export function AppProvider({ children }) {
     toastTimer.current = setTimeout(() => setToast({ show: false, msg: '' }), 2200);
   }, []);
 
-  // Theme
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
-  // Fetch
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
@@ -69,7 +63,6 @@ export function AppProvider({ children }) {
 
   useEffect(() => { fetchItems(); }, [fetchItems]);
 
-  // CRUD
   const addItem = async (data) => {
     try {
       showToast('Saving…');
@@ -83,10 +76,8 @@ export function AppProvider({ children }) {
 
   const updateItem = async (id, data) => {
     try {
-      showToast('Updating…');
       await watchlistAPI.update(id, data);
       await fetchItems();
-      showToast('✅ Updated!');
     } catch {
       showToast('❌ Failed to update');
     }
@@ -112,18 +103,22 @@ export function AppProvider({ children }) {
     }
   };
 
-  // *** FIX: unified handler called by DetailModal buttons ***
-  // Saves the item in a ref BEFORE closing the detail modal, so the pwd modal always has it
+  // Generic action requester — works for delete, edit, favorite, lock
   const requestAction = (action, item) => {
-    pendingItemRef.current = item;   // save item first
+    pendingItemRef.current = item;
     setPwdAction(action);
-    setShowDetailModal(false);       // close detail
+    setShowDetailModal(false);
     setDetailItem(null);
-    // slight delay so detail modal finishes closing before pwd opens
     setTimeout(() => setShowPwdModal(true), 180);
   };
 
-  // *** FIX: called by PasswordModal after successful auth ***
+  // Same but doesn't close detail modal (for card toggle buttons)
+  const requestCardAction = (action, item) => {
+    pendingItemRef.current = item;
+    setPwdAction(action);
+    setShowPwdModal(true);
+  };
+
   const executePendingAction = async () => {
     const item = pendingItemRef.current;
     if (!item) return;
@@ -133,6 +128,12 @@ export function AppProvider({ children }) {
     } else if (pwdAction === 'edit') {
       setEditItem(item);
       setTimeout(() => setShowAddModal(true), 200);
+    } else if (pwdAction === 'favorite') {
+      await updateItem(item._id, { favorite: !item.favorite });
+      showToast(item.favorite ? '💔 Removed from favorites' : '❤️ Added to favorites!');
+    } else if (pwdAction === 'lock') {
+      await updateItem(item._id, { locked: !item.locked });
+      showToast(item.locked ? '🔓 Card unlocked' : '🔒 Card locked!');
     }
 
     pendingItemRef.current = null;
@@ -155,8 +156,9 @@ export function AppProvider({ children }) {
       pwdAction,    setPwdAction,
       toast,        showToast,
       addItem, updateItem, deleteItem, verifyPassword,
-      requestAction,        // ← used by DetailModal
-      executePendingAction, // ← used by PasswordModal
+      requestAction,
+      requestCardAction,
+      executePendingAction,
     }}>
       {children}
     </AppContext.Provider>

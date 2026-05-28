@@ -26,15 +26,15 @@ const DEFAULT_DATA = [
   { title: 'Apollo 11', type: 'documentary', year: 2019, genre: 'Space, History', status: 'watched', rating: 5, emoji: '🚀', note: 'Restored archival footage that makes you feel like you were there in 1969. No narration, no talking heads — just pure awe-inspiring history. Must watch.', added: Date.now() - 4.5e8 },
 ];
 
-// @desc    Get all watchlist items
-// @route   GET /api/watchlist
+// @desc  Get all items — favorites first (A→Z), then rest (A→Z), other sorts override this
+// @route GET /api/watchlist
 const getAll = async (req, res) => {
   try {
     const { status, type, search, sort } = req.query;
     let query = {};
 
     if (status && status !== 'all') query.status = status;
-    if (type && type !== 'all') query.type = type;
+    if (type   && type   !== 'all') query.type   = type;
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -42,15 +42,17 @@ const getAll = async (req, res) => {
       ];
     }
 
-    let sortOption = { added: -1 };
-    if (sort === 'oldest') sortOption = { added: 1 };
-    else if (sort === 'rating') sortOption = { rating: -1 };
-    else if (sort === 'az') sortOption = { title: 1 };
-    else if (sort === 'year') sortOption = { year: -1 };
+    // Default: favorites first (A→Z), then rest (A→Z)
+    // Other sort options work normally but favorites still bubble up
+    let sortOption = { favorite: -1, title: 1 };
+    if (sort === 'newest')  sortOption = { favorite: -1, added: -1 };
+    else if (sort === 'oldest') sortOption = { favorite: -1, added: 1 };
+    else if (sort === 'rating') sortOption = { favorite: -1, rating: -1 };
+    else if (sort === 'az')     sortOption = { favorite: -1, title: 1 };
+    else if (sort === 'year')   sortOption = { favorite: -1, year: -1 };
 
     const items = await Watchlist.find(query).sort(sortOption);
 
-    // Seed DB if empty
     if (items.length === 0 && !status && !type && !search) {
       const seeded = await Watchlist.insertMany(DEFAULT_DATA);
       return res.json({ success: true, data: seeded });
@@ -62,8 +64,8 @@ const getAll = async (req, res) => {
   }
 };
 
-// @desc    Get stats (counts)
-// @route   GET /api/watchlist/stats
+// @desc  Stats
+// @route GET /api/watchlist/stats
 const getStats = async (req, res) => {
   try {
     const [total, movies, series, anime, docs, watched] = await Promise.all([
@@ -80,8 +82,8 @@ const getStats = async (req, res) => {
   }
 };
 
-// @desc    Create new item
-// @route   POST /api/watchlist
+// @desc  Create
+// @route POST /api/watchlist
 const createItem = async (req, res) => {
   try {
     const item = await Watchlist.create({ ...req.body, added: Date.now() });
@@ -95,8 +97,8 @@ const createItem = async (req, res) => {
   }
 };
 
-// @desc    Update item (requires password verification done on frontend via /api/auth/verify)
-// @route   PUT /api/watchlist/:id
+// @desc  Update (includes toggling favorite/locked)
+// @route PUT /api/watchlist/:id
 const updateItem = async (req, res) => {
   try {
     const item = await Watchlist.findByIdAndUpdate(
@@ -111,8 +113,8 @@ const updateItem = async (req, res) => {
   }
 };
 
-// @desc    Delete item (requires password verification done on frontend via /api/auth/verify)
-// @route   DELETE /api/watchlist/:id
+// @desc  Delete
+// @route DELETE /api/watchlist/:id
 const deleteItem = async (req, res) => {
   try {
     const item = await Watchlist.findByIdAndDelete(req.params.id);

@@ -1,18 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import { useApp } from '../context/AppContext';
 
-export default function PasswordModal() {
-  const {
-    showPwdModal, setShowPwdModal,
-    pwdAction,
-    verifyPassword,
-    executePendingAction,
-  } = useApp();
+const ACTION_MAP = {
+  delete:   { icon: '🗑️', title: 'CONFIRM DELETE',      sub: 'Enter your secret password to delete this title.',       confirm: 'Delete ♡'       },
+  edit:     { icon: '✏️', title: 'VERIFY TO EDIT',       sub: 'Enter your secret password to edit this title.',         confirm: 'Unlock Edit ♡'  },
+  favorite: { icon: '❤️', title: 'VERIFY TO FAVORITE',   sub: 'Enter your secret password to toggle favorite.',         confirm: 'Confirm ♡'      },
+  lock:     { icon: '🔒', title: 'VERIFY TO LOCK',        sub: 'Enter your secret password to lock / unlock this card.', confirm: 'Confirm ♡'      },
+};
 
-  const [pwd,      setPwd]      = useState('');
-  const [showPwd,  setShowPwd]  = useState(false);
-  const [error,    setError]    = useState('');
-  const [shaking,  setShaking]  = useState(false);
+export default function PasswordModal() {
+  const { showPwdModal, setShowPwdModal, pwdAction, verifyPassword, executePendingAction } = useApp();
+
+  const [pwd,     setPwd]     = useState('');
+  const [showPwd, setShowPwd] = useState(false);
+  const [error,   setError]   = useState('');
+  const [shaking, setShaking] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -24,9 +26,7 @@ export default function PasswordModal() {
     }
   }, [showPwdModal]);
 
-  const close = () => {
-    setShowPwdModal(false);
-  };
+  const close = () => setShowPwdModal(false);
 
   const wrongPassword = () => {
     const msgs = [
@@ -44,27 +44,20 @@ export default function PasswordModal() {
   const confirm = async () => {
     const ok = await verifyPassword(pwd);
     if (!ok) { wrongPassword(); return; }
-
-    // Password correct — close modal first, then execute the action
     setShowPwdModal(false);
     await executePendingAction();
   };
 
-  const icon         = pwdAction === 'delete' ? '🗑️' : '✏️';
-  const title        = pwdAction === 'delete' ? 'CONFIRM DELETE' : 'VERIFY TO EDIT';
-  const sub          = pwdAction === 'delete'
-    ? 'Enter your secret password to delete this title.'
-    : 'Enter your secret password to edit this title.';
-  const confirmLabel = pwdAction === 'delete' ? 'Delete ♡' : 'Unlock Edit ♡';
+  const meta = ACTION_MAP[pwdAction] || ACTION_MAP.edit;
 
   if (!showPwdModal) return null;
 
   return (
     <div className="modal-overlay open" onClick={e => e.target === e.currentTarget && close()}>
       <div className="pwd-modal">
-        <span className="pwd-icon">{icon}</span>
-        <div className="pwd-title">{title}</div>
-        <p className="pwd-sub">{sub}</p>
+        <span className="pwd-icon">{meta.icon}</span>
+        <div className="pwd-title">{meta.title}</div>
+        <p className="pwd-sub">{meta.sub}</p>
 
         <div className="pwd-dots">
           {Array.from({ length: 7 }).map((_, i) => (
@@ -101,7 +94,7 @@ export default function PasswordModal() {
 
         <div className="pwd-footer">
           <button className="btn btn-cancel" onClick={close}>Cancel</button>
-          <button className="btn btn-save"   onClick={confirm}>{confirmLabel}</button>
+          <button className="btn btn-save"   onClick={confirm}>{meta.confirm}</button>
         </div>
       </div>
     </div>
